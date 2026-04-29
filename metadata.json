@@ -1,0 +1,14 @@
+{
+  "name": "UpAI",
+  "description": "An intelligent alarm app that helps you build better mornings through positive, habit-forming actions verified by AI.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "notifications"
+  ],
+  "majorCapabilities": [
+    "AI-powered image verification",
+    "Smart alarm system",
+    "Morning habit tracking"
+  ]
+}

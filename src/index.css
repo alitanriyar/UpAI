@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Nunito:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Nunito", "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Nunito", sans-serif;
+  
+  --color-morning-cream: #FFF6E9;
+  --color-sunrise: #FFB86C;
+  --color-morning-yellow: #FFE8A3;
+  --color-mint: #A8E6CF;
+  --color-sky: #A0D8EF;
+  --color-soft-purple: #D6C1FF;
+  --color-charcoal: #2E2E2E;
+  --color-charcoal-light: #6B6B6B;
+  --color-minimal-gray: #EAEAEA;
+
+  --shadow-soft: 0 4px 20px rgba(255, 184, 108, 0.1);
+  --shadow-premium: 0 24px 48px -12px rgba(46, 46, 46, 0.08);
+  --shadow-minimal: 0 10px 20px rgba(0, 0, 0, 0.03);
+  
+  --radius-xl: 12px;
+  --radius-2xl: 20px;
+  --radius-3xl: 32px;
+  --radius-4xl: 40px;
+}
+
+@layer base {
+  body {
+    @apply bg-morning-cream text-charcoal font-sans antialiased overflow-x-hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-black tracking-tight;
+  }
+}
+
+@layer utilities {
+  .sunrise-gradient {
+    background: linear-gradient(135deg, #FFB86C 0%, #FFE8A3 100%);
+  }
+
+  .sky-gradient {
+    background: linear-gradient(135deg, #A0D8EF 0%, #A8E6CF 100%);
+  }
+
+  .premium-card {
+    @apply bg-white rounded-3xl shadow-premium p-6 border border-white;
+  }
+
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-md rounded-3xl border border-white/40 shadow-minimal;
+  }
+
+  .device-container {
+    @apply w-full max-w-[420px] h-full mx-auto bg-morning-cream text-charcoal font-sans overflow-hidden flex flex-col relative;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

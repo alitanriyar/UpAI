@@ -1,0 +1,105 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User specific settings and metadata including compliance fields",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "preferredTask": { "type": "string" },
+        "wakeGoal": { "type": "string" },
+        "difficulty": { "type": "string", "enum": ["easy", "medium", "hard"] },
+        "aiSensitivity": { "type": "number" },
+        "subscriptionStatus": { "type": "string", "enum": ["free", "pro"] },
+        "onboardingComplete": { "type": "boolean" },
+        "termsAccepted": { "type": "boolean" },
+        "termsVersion": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "onboardingComplete", "createdAt"]
+    },
+    "Alarm": {
+      "title": "Alarm",
+      "description": "Alarm configuration for a user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "time": { "type": "string" },
+        "days": { "type": "array", "items": { "type": "integer" } },
+        "label": { "type": "string" },
+        "enabled": { "type": "boolean" },
+        "taskType": { "type": "string" },
+        "snooze": { "type": "boolean" },
+        "vibration": { "type": "boolean" },
+        "sound": { "type": "string" },
+        "gradualVolume": { "type": "boolean" },
+        "pitchShift": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "time", "days", "label", "enabled", "taskType", "snooze", "vibration", "sound", "gradualVolume", "pitchShift", "createdAt", "updatedAt"]
+    },
+    "UserStats": {
+      "title": "User Stats",
+      "description": "Aggregated user stats and streak information",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "streak": { "type": "integer" },
+        "bestStreak": { "type": "integer" },
+        "totalWakes": { "type": "integer" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "streak", "bestStreak", "totalWakes", "updatedAt"]
+    },
+    "WakeHistory": {
+      "title": "Wake History",
+      "description": "Log of successful wake events",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "taskType": { "type": "string" },
+        "time": { "type": "string" }
+      },
+      "required": ["userId", "date", "taskType", "time"]
+    },
+    "SupportRequest": {
+      "title": "Support Request",
+      "description": "Contact support form submission",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "email": { "type": "string" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "email", "subject", "message", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile and settings"
+    },
+    "/users/{userId}/alarms/{alarmId}": {
+      "schema": "Alarm",
+      "description": "Collection of alarms for a specific user"
+    },
+    "/users/{userId}/stats/current": {
+      "schema": "UserStats",
+      "description": "User's current streak and aggregate stats"
+    },
+    "/users/{userId}/history/{historyId}": {
+      "schema": "WakeHistory",
+      "description": "Individual success records"
+    },
+    "/support/{requestId}": {
+      "schema": "SupportRequest",
+      "description": "Support tickets"
+    }
+  }
+}

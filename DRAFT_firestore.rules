@@ -1,0 +1,136 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Entity Validations ---
+    function isValidUser(data) {
+      let requiredFields = ['name', 'email', 'onboardingComplete', 'createdAt'];
+      return data.keys().hasAll(requiredFields)
+        && data.name is string && data.name.size() <= 200
+        && data.email is string && data.email.size() <= 200
+        && data.onboardingComplete is bool
+        && (data.get('photoURL', null) == null || (data.photoURL is string && data.photoURL.size() <= 2000))
+        && (data.get('providerId', null) == null || data.providerId is string)
+        && (data.get('preferredTask', null) == null || data.preferredTask is string)
+        && (data.get('wakeGoal', null) == null || data.wakeGoal is string)
+        && (data.get('difficulty', null) == null || data.difficulty in ['easy', 'medium', 'hard'])
+        && (data.get('aiSensitivity', null) == null || data.aiSensitivity is number)
+        && (data.get('subscriptionStatus', null) == null || data.subscriptionStatus in ['free', 'pro'])
+        && (data.get('dailyUsage', null) == null || data.dailyUsage is map)
+        && (data.get('termsAccepted', null) == null || data.termsAccepted is bool)
+        && (data.get('termsVersion', null) == null || data.termsVersion is string)
+        && (data.get('lastActiveAt', null) == null || data.lastActiveAt is timestamp)
+        && data.createdAt is timestamp;
+    }
+
+    function isValidAlarm(data) {
+      return data.keys().hasAll(['userId', 'time', 'days', 'label', 'enabled', 'snooze', 'vibration', 'sound', 'gradualVolume', 'pitchShift', 'createdAt', 'updatedAt'])
+        && data.userId == request.auth.uid
+        && data.time is string && data.time.size() <= 10
+        && data.days is list && data.days.size() <= 7
+        && data.label is string && data.label.size() <= 100
+        && data.enabled is bool
+        && (data.get('taskType', null) == null || data.taskType is string)
+        && (data.get('tasks', null) == null || data.tasks is list)
+        && data.snooze is bool
+        && data.vibration is bool
+        && data.sound is string
+        && data.gradualVolume is bool
+        && data.pitchShift is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidStats(data) {
+      return data.keys().hasAll(['userId', 'streak', 'bestStreak', 'totalWakes', 'updatedAt'])
+        && data.userId == request.auth.uid
+        && data.streak is int && data.streak >= 0
+        && data.bestStreak is int && data.bestStreak >= 0
+        && data.totalWakes is int && data.totalWakes >= 0
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidHistory(data) {
+      return data.keys().hasAll(['userId', 'date', 'taskType', 'time'])
+        && data.userId == request.auth.uid
+        && data.date is timestamp
+        && data.taskType is string
+        && data.time is string && data.time.size() <= 10;
+    }
+
+    // --- Matches ---
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming()) && incoming().createdAt == request.time;
+      allow update: if isOwner(userId) && isValidUser(incoming()) 
+        && incoming().createdAt == existing().createdAt
+        && (
+          // Allow updates to any of these fields
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'name', 'email', 'photoURL', 'preferredTask', 'wakeGoal', 
+            'difficulty', 'aiSensitivity', 'subscriptionStatus', 
+            'onboardingComplete', 'dailyUsage', 'termsAccepted', 
+            'termsVersion', 'lastActiveAt'
+          ])
+        )
+        && (
+          !incoming().diff(existing()).affectedKeys().hasAny(['email']) || 
+          existing().get('email', "") == "" || 
+          incoming().email == existing().email
+        );
+      allow delete: if isOwner(userId);
+
+      match /alarms/{alarmId} {
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(alarmId) && isValidAlarm(incoming()) && incoming().createdAt == request.time;
+        allow update: if isOwner(userId) && isValidAlarm(incoming())
+          && incoming().userId == existing().userId 
+          && incoming().createdAt == existing().createdAt 
+          && incoming().updatedAt == request.time;
+        allow delete: if isOwner(userId);
+      }
+
+      match /stats/{statId} {
+        allow get: if isOwner(userId);
+        allow write, delete: if isOwner(userId) && (request.method == 'delete' || (isValidStats(incoming()) && incoming().updatedAt == request.time));
+      }
+
+      match /history/{historyId} {
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(historyId) && isValidHistory(incoming()) && incoming().date == request.time;
+        allow delete: if isOwner(userId);
+        allow update: if false; 
+      }
+    }
+
+    match /support/{requestId} {
+      allow create: if true; // Simple support message creation
+      allow read, update, delete: if false;
+    }
+  }
+}
